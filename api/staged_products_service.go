@@ -70,6 +70,7 @@ type ConfigurationRequest struct {
 type ConfigResponse struct {
 	Properties        map[string]ResponseProperty `yaml:"properties,omitempty"`
 	NetworkProperties map[string]interface{}      `yaml:"networks_and_azs,omitempty"`
+	ResourceConfig    []map[string]interface{}    `yaml:"resources,omitempty"`
 }
 
 func NewStagedProductsService(client httpClient) StagedProductsService {
@@ -349,6 +350,7 @@ func (p StagedProductsService) ExportConfig(product string) (ExportConfigOutput,
 	for name, fields := range networkPropertiesResponse.NetworkProperties {
 		networkPropertiesOutput[name] = fields
 	}
+
 	return ExportConfigOutput{
 		Properties:        propertiesOutput,
 		NetworkProperties: networkPropertiesOutput,

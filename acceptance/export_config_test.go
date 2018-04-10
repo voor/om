@@ -71,6 +71,27 @@ var _ = Describe("export-config command", func() {
             }
           }
         }`))
+			case "/api/v0/staged/products/some-product-guid/jobs":
+				w.Write([]byte(`{
+					"jobs": [
+					  {
+							"name": "some-job",
+							"guid": "some-guid"
+						}
+					]
+				}`))
+			case "/api/v0/staged/products/some-product-guid/jobs/some-guid/resource_config":
+				w.Write([]byte(`{
+						"instances": 1,
+						"instance_type": {
+							"id": "automatic"
+						},
+						"persistent_disk": {
+							"size_mb": "20480"
+						},
+						"internet_connected": true,
+						"elb_names": ["my-elb"]
+					}`))
 			default:
 				out, err := httputil.DumpRequest(req, true)
 				Expect(err).NotTo(HaveOccurred())
@@ -106,6 +127,13 @@ network-properties:
     - name: az-three
   network:
     name: network-one
+resource-config:
+  some-job:
+    instances: 1
+    persistent_disk: { size_mb: "20480" }
+    instance_type: { id: automatic }
+    elb_names: ["my-elb"]
+    internet_connected: true
 `))
 	})
 })

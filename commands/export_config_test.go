@@ -14,18 +14,22 @@ import (
 
 var _ = Describe("ExportTemplate", func() {
 	var (
-		logger              *fakes.Logger
-		exportConfigService *fakes.ExportConfigService
+		logger                *fakes.Logger
+		exportConfigService   *fakes.ExportConfigService
+		exportJobsService     *fakes.JobsService
+		stagedProductsService *fakes.StagedProductsService
 	)
 
 	BeforeEach(func() {
 		logger = &fakes.Logger{}
 		exportConfigService = &fakes.ExportConfigService{}
+		exportJobsService = &fakes.JobsService{}
+		stagedProductsService = &fakes.StagedProductsService{}
 	})
 
 	Describe("Execute", func() {
 		It("writes a config file to output", func() {
-			command := commands.NewExportConfig(exportConfigService, logger)
+			command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
 			exportConfigService.ExportConfigReturns(api.ExportConfigOutput{
 				Properties: map[string]api.OutputProperty{
 					".properties.some-string-property": api.OutputProperty{
@@ -39,6 +43,22 @@ var _ = Describe("ExportTemplate", func() {
 				},
 			}, nil)
 
+			stagedProductsService.FindReturns(api.StagedProductsFindOutput{
+				Product: api.StagedProduct{
+					GUID: "some-product-guid",
+				},
+			}, nil)
+
+			exportJobsService.JobsReturns(map[string]string{
+				"some-job": "some-job-guid",
+			}, nil)
+			exportJobsService.GetExistingJobConfigReturns(api.JobProperties{
+				InstanceType: api.InstanceType{
+					ID: "automatic",
+				},
+				Instances: 1,
+			}, nil)
+
 			err := command.Execute([]string{
 				"--product-name", "some-product",
 			})
@@ -46,6 +66,17 @@ var _ = Describe("ExportTemplate", func() {
 
 			Expect(exportConfigService.ExportConfigCallCount()).To(Equal(1))
 			Expect(exportConfigService.ExportConfigArgsForCall(0)).To(Equal("some-product"))
+
+			Expect(stagedProductsService.FindCallCount()).To(Equal(1))
+			Expect(stagedProductsService.FindArgsForCall(0)).To(Equal("some-product"))
+
+			Expect(exportJobsService.JobsCallCount()).To(Equal(1))
+			Expect(exportJobsService.JobsArgsForCall(0)).To(Equal("some-product-guid"))
+
+			Expect(exportJobsService.GetExistingJobConfigCallCount()).To(Equal(1))
+			productGuid, jobsGuid := exportJobsService.GetExistingJobConfigArgsForCall(0)
+			Expect(productGuid).To(Equal("some-product-guid"))
+			Expect(jobsGuid).To(Equal("some-job-guid"))
 
 			Expect(logger.PrintlnCallCount()).To(Equal(1))
 			output := logger.PrintlnArgsForCall(0)
@@ -56,6 +87,11 @@ product-properties:
 network-properties:
   singleton_availability_zone:
     name: az-one
+resource-config:
+  some-job:
+    instances: 1
+    instance_type:
+      id: automatic
 `)))
 		})
 
@@ -64,7 +100,7 @@ network-properties:
 	Context("failure cases", func() {
 		Context("when an unknown flag is provided", func() {
 			It("returns an error", func() {
-				command := commands.NewExportConfig(exportConfigService, logger)
+				command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
 				err := command.Execute([]string{"--badflag"})
 				Expect(err).To(MatchError("could not parse export-config flags: flag provided but not defined: -badflag"))
 			})
@@ -72,7 +108,7 @@ network-properties:
 
 		Context("when product name is not provided", func() {
 			It("returns an error and prints out usage", func() {
-				command := commands.NewExportConfig(exportConfigService, logger)
+				command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
 				err := command.Execute([]string{})
 				Expect(err).To(MatchError("could not parse export-config flags: missing required flag \"--product-name\""))
 			})
@@ -80,7 +116,7 @@ network-properties:
 
 		Context("when the config cannot be exported", func() {
 			It("returns an error", func() {
-				command := commands.NewExportConfig(exportConfigService, logger)
+				command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
 				exportConfigService.ExportConfigReturns(api.ExportConfigOutput{}, errors.New("some error"))
 
 				err := command.Execute([]string{"--product-name", "some-product"})
@@ -91,7 +127,7 @@ network-properties:
 
 	Describe("Usage", func() {
 		It("returns usage information for the command", func() {
-			command := commands.NewExportConfig(nil, nil)
+			command := commands.NewExportConfig(nil, nil, nil, nil)
 			Expect(command.Usage()).To(Equal(jhanda.Usage{
 				Description:      "This command generates a config from a staged product that can be passed in to om configure-product",
 				ShortDescription: "generates a config from a staged product",
