@@ -9,38 +9,26 @@ import (
 )
 
 type ExportConfig struct {
-	logger                logger
-	exportConfigService   exportConfigService
-	exportJobsService     jobsService
-	stagedProductsService stagedProductsService
-	Options               struct {
+	logger              logger
+	exportConfigService exportConfigService
+	Options             struct {
 		Product string `long:"product-name"    short:"p" required:"true" description:"name of product"`
 	}
 }
 
 //go:generate counterfeiter -o ./fakes/export_config_service.go --fake-name ExportConfigService . exportConfigService
 type exportConfigService interface {
-	ExportConfig(product string) (api.ExportConfigOutput, error)
-}
-
-//go:generate counterfeiter -o ./fakes/export_jobs_config.go --fake-name ExportJobsConfig . exportJobsConfig
-type exportJobsConfig interface {
+	Find(product string) (api.StagedProductsFindOutput, error)
 	Jobs(productGUID string) (map[string]string, error)
 	GetExistingJobConfig(productGUID, jobGUID string) (api.JobProperties, error)
+	Properties(product string) (map[string]api.ResponseProperty, error)
+	NetworksAndAZs(product string) (map[string]interface{}, error)
 }
 
-type omConfigOutput struct {
-	Properties               map[string]api.OutputProperty `yaml:"product-properties"`
-	NetworkProperties        map[string]interface{}        `yaml:"network-properties"`
-	ResourceConfigProperties map[string]api.JobProperties  `yaml:"resource-config"`
-}
-
-func NewExportConfig(exportConfigService exportConfigService, exportJobsService jobsService, stagedProductsService stagedProductsService, logger logger) ExportConfig {
+func NewExportConfig(exportConfigService exportConfigService, logger logger) ExportConfig {
 	return ExportConfig{
-		logger:                logger,
-		exportConfigService:   exportConfigService,
-		exportJobsService:     exportJobsService,
-		stagedProductsService: stagedProductsService,
+		logger:              logger,
+		exportConfigService: exportConfigService,
 	}
 }
 
@@ -57,18 +45,31 @@ func (ec ExportConfig) Execute(args []string) error {
 		return fmt.Errorf("could not parse export-config flags: %s", err)
 	}
 
-	productConfig, err := ec.exportConfigService.ExportConfig(ec.Options.Product)
-	if err != nil {
-		return fmt.Errorf("failed to export config: %s", err)
-	}
-
-	findOutput, err := ec.stagedProductsService.Find(ec.Options.Product)
+	findOutput, err := ec.exportConfigService.Find(ec.Options.Product)
 	if err != nil {
 		return fmt.Errorf("could not find staged product with name 'p-bosh': %s", err)
 	}
 	productGUID := findOutput.Product.GUID
 
-	jobs, err := ec.exportJobsService.Jobs(productGUID)
+	properties, err := ec.exportConfigService.Properties(productGUID)
+	if err != nil {
+		panic(err)
+	}
+
+	configurableProperties := map[string]interface{}{}
+
+	for name, property := range properties {
+		if property.Configurable {
+			configurableProperties[name] = map[string]interface{}{"value": property.Value}
+		}
+	}
+
+	networks, err := ec.exportConfigService.NetworksAndAZs(productGUID)
+	if err != nil {
+		panic(err)
+	}
+
+	jobs, err := ec.exportConfigService.Jobs(productGUID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch jobs: %s", err)
 	}
@@ -76,7 +77,7 @@ func (ec ExportConfig) Execute(args []string) error {
 	resourceConfig := map[string]api.JobProperties{}
 
 	for name, jobGUID := range jobs {
-		jobProperties, err := ec.exportJobsService.GetExistingJobConfig(productGUID, jobGUID)
+		jobProperties, err := ec.exportConfigService.GetExistingJobConfig(productGUID, jobGUID)
 		if err != nil {
 			panic(err)
 		}
@@ -84,9 +85,13 @@ func (ec ExportConfig) Execute(args []string) error {
 		resourceConfig[name] = jobProperties
 	}
 
-	config := omConfigOutput{
-		Properties:               productConfig.Properties,
-		NetworkProperties:        productConfig.NetworkProperties,
+	config := struct {
+		Properties               map[string]interface{}       `yaml:"product-properties"`
+		NetworkProperties        map[string]interface{}       `yaml:"network-properties"`
+		ResourceConfigProperties map[string]api.JobProperties `yaml:"resource-config"`
+	}{
+		Properties:               configurableProperties,
+		NetworkProperties:        networks,
 		ResourceConfigProperties: resourceConfig,
 	}
 
