@@ -27,7 +27,69 @@ var _ = Describe("CredentialsService", func() {
 		service = api.NewCredentialsService(client, bar)
 	})
 
-	Describe("Fetch", func() {
+	Describe("ListCredentials", func() {
+
+		It("lists credential references", func() {
+			var path string
+
+			client.DoStub = func(req *http.Request) (*http.Response, error) {
+				path = req.URL.Path
+
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body: ioutil.NopCloser(
+						strings.NewReader(`{"credentials":[".properties.some-credentials",".my-job.some-credentials"]}`),
+					),
+				}, nil
+			}
+			output, err := service.ListCredentials("some-deployed-product-guid")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(path).To(Equal("/api/v0/deployed/products/some-deployed-product-guid/credentials"))
+			Expect(output.Credentials).To(ConsistOf(
+				[]string{
+					".properties.some-credentials",
+					".my-job.some-credentials",
+				},
+			))
+		})
+
+		Describe("errors", func() {
+			Context("the client can't connect to the server", func() {
+				It("returns an error", func() {
+					client.DoReturns(&http.Response{}, errors.New("some error"))
+					_, err := service.ListCredentials("invalid-product")
+					Expect(err).To(MatchError(ContainSubstring("could not make api request")))
+				})
+			})
+
+			Context("when the server won't fetch credential references", func() {
+				It("returns an error", func() {
+					client.DoReturns(&http.Response{
+						StatusCode: http.StatusInternalServerError,
+						Body:       ioutil.NopCloser(strings.NewReader(`{}`)),
+					}, nil)
+
+					_, err := service.ListCredentials("")
+					Expect(err).To(MatchError(ContainSubstring("request failed")))
+				})
+			})
+
+			Context("when the response is not JSON", func() {
+				It("returns an error", func() {
+					client.DoReturns(&http.Response{
+						StatusCode: http.StatusOK,
+						Body:       ioutil.NopCloser(strings.NewReader(`asdf`)),
+					}, nil)
+
+					_, err := service.ListCredentials("some-deployed-product-guid")
+					Expect(err).To(MatchError(ContainSubstring("could not unmarshal")))
+				})
+			})
+		})
+	})
+
+	Describe("FetchCredential", func() {
 
 		It("fetch a credential reference", func() {
 			var path string
@@ -42,7 +104,7 @@ var _ = Describe("CredentialsService", func() {
 					),
 				}, nil
 			}
-			output, err := service.Fetch("some-deployed-product-guid", ".properties.some-credentials")
+			output, err := service.FetchCredential("some-deployed-product-guid", ".properties.some-credentials")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(path).To(Equal("/api/v0/deployed/products/some-deployed-product-guid/credentials/.properties.some-credentials"))
@@ -54,7 +116,7 @@ var _ = Describe("CredentialsService", func() {
 			Context("the client can't connect to the server", func() {
 				It("returns an error", func() {
 					client.DoReturns(&http.Response{}, errors.New("some error"))
-					_, err := service.Fetch("invalid-product", "")
+					_, err := service.FetchCredential("invalid-product", "")
 					Expect(err).To(MatchError(ContainSubstring("could not make api request")))
 				})
 			})
@@ -66,7 +128,7 @@ var _ = Describe("CredentialsService", func() {
 						Body:       ioutil.NopCloser(strings.NewReader(`{}`)),
 					}, nil)
 
-					_, err := service.Fetch("invalid-product", "")
+					_, err := service.FetchCredential("invalid-product", "")
 					Expect(err).To(MatchError(ContainSubstring("request failed")))
 				})
 			})
@@ -78,7 +140,7 @@ var _ = Describe("CredentialsService", func() {
 						Body:       ioutil.NopCloser(strings.NewReader(`asdf`)),
 					}, nil)
 
-					_, err := service.Fetch("some-deployed-product-guid", "")
+					_, err := service.FetchCredential("some-deployed-product-guid", "")
 					Expect(err).To(MatchError(ContainSubstring("could not unmarshal")))
 				})
 			})
