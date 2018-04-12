@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("export-config command", func() {
+var _ = Describe("staged-config command", func() {
 	var (
 		server *httptest.Server
 	)
@@ -115,7 +115,7 @@ var _ = Describe("export-config command", func() {
 			"--username", "some-username",
 			"--password", "some-password",
 			"--skip-ssl-validation",
-			"export-config",
+			"staged-config",
 			"--product-name", "some-product",
 		)
 

@@ -174,13 +174,6 @@ func main() {
 	commandSet["deployed-manifest"] = commands.NewDeployedManifest(deployedProductsService, stdout)
 	commandSet["deployed-products"] = commands.NewDeployedProducts(presenter, diagnosticService)
 	commandSet["errands"] = commands.NewErrands(presenter, errandsService, stagedProductsService)
-	commandSet["export-config"] = commands.NewExportConfig(struct {
-		api.StagedProductsService
-		api.JobsService
-	}{
-		stagedProductsService,
-		jobsService,
-	}, stdout)
 	commandSet["export-installation"] = commands.NewExportInstallation(exportInstallationService, stdout)
 	commandSet["generate-certificate"] = commands.NewGenerateCertificate(certificatesService, stdout)
 	commandSet["generate-certificate-authority"] = commands.NewGenerateCertificateAuthority(certificateAuthoritiesService, presenter)
@@ -192,6 +185,13 @@ func main() {
 	commandSet["regenerate-certificates"] = commands.NewRegenerateCertificateAuthority(certificateAuthoritiesService, stdout)
 	commandSet["revert-staged-changes"] = commands.NewRevertStagedChanges(dashboardService, stdout)
 	commandSet["set-errand-state"] = commands.NewSetErrandState(errandsService, stagedProductsService)
+	commandSet["staged-config"] = commands.NewStagedConfig(struct {
+		api.StagedProductsService
+		api.JobsService
+	}{
+		stagedProductsService,
+		jobsService,
+	}, stdout)
 	commandSet["stage-product"] = commands.NewStageProduct(stagedProductsService, deployedProductsService, availableProductsService, diagnosticService, stdout)
 	commandSet["staged-manifest"] = commands.NewStagedManifest(stagedProductsService, stdout)
 	commandSet["staged-products"] = commands.NewStagedProducts(presenter, diagnosticService)

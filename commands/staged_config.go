@@ -8,16 +8,16 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type ExportConfig struct {
+type StagedConfig struct {
 	logger              logger
-	exportConfigService exportConfigService
+	stagedConfigService stagedConfigService
 	Options             struct {
 		Product string `long:"product-name"    short:"p" required:"true" description:"name of product"`
 	}
 }
 
-//go:generate counterfeiter -o ./fakes/export_config_service.go --fake-name ExportConfigService . exportConfigService
-type exportConfigService interface {
+//go:generate counterfeiter -o ./fakes/export_config_service.go --fake-name StagedConfigService . stagedConfigService
+type stagedConfigService interface {
 	Find(product string) (api.StagedProductsFindOutput, error)
 	Jobs(productGUID string) (map[string]string, error)
 	GetExistingJobConfig(productGUID, jobGUID string) (api.JobProperties, error)
@@ -25,33 +25,33 @@ type exportConfigService interface {
 	NetworksAndAZs(product string) (map[string]interface{}, error)
 }
 
-func NewExportConfig(exportConfigService exportConfigService, logger logger) ExportConfig {
-	return ExportConfig{
+func NewStagedConfig(stagedConfigService stagedConfigService, logger logger) StagedConfig {
+	return StagedConfig{
 		logger:              logger,
-		exportConfigService: exportConfigService,
+		stagedConfigService: stagedConfigService,
 	}
 }
 
-func (ec ExportConfig) Usage() jhanda.Usage {
+func (ec StagedConfig) Usage() jhanda.Usage {
 	return jhanda.Usage{
-		Description:      "This command generates a config from a staged product that can be passed in to om configure-product",
+		Description:      "This command generates a config from a staged product that can be passed in to om configure-product (Note: credentials are not available and will appear as '***')",
 		ShortDescription: "generates a config from a staged product",
 		Flags:            ec.Options,
 	}
 }
 
-func (ec ExportConfig) Execute(args []string) error {
+func (ec StagedConfig) Execute(args []string) error {
 	if _, err := jhanda.Parse(&ec.Options, args); err != nil {
-		return fmt.Errorf("could not parse export-config flags: %s", err)
+		return fmt.Errorf("could not parse staged-config flags: %s", err)
 	}
 
-	findOutput, err := ec.exportConfigService.Find(ec.Options.Product)
+	findOutput, err := ec.stagedConfigService.Find(ec.Options.Product)
 	if err != nil {
 		return err
 	}
 	productGUID := findOutput.Product.GUID
 
-	properties, err := ec.exportConfigService.Properties(productGUID)
+	properties, err := ec.stagedConfigService.Properties(productGUID)
 	if err != nil {
 		return err
 	}
@@ -59,17 +59,17 @@ func (ec ExportConfig) Execute(args []string) error {
 	configurableProperties := map[string]interface{}{}
 
 	for name, property := range properties {
-		if property.Configurable {
+		if property.Configurable && property.Value != nil {
 			configurableProperties[name] = map[string]interface{}{"value": property.Value}
 		}
 	}
 
-	networks, err := ec.exportConfigService.NetworksAndAZs(productGUID)
+	networks, err := ec.stagedConfigService.NetworksAndAZs(productGUID)
 	if err != nil {
 		return err
 	}
 
-	jobs, err := ec.exportConfigService.Jobs(productGUID)
+	jobs, err := ec.stagedConfigService.Jobs(productGUID)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (ec ExportConfig) Execute(args []string) error {
 	resourceConfig := map[string]api.JobProperties{}
 
 	for name, jobGUID := range jobs {
-		jobProperties, err := ec.exportConfigService.GetExistingJobConfig(productGUID, jobGUID)
+		jobProperties, err := ec.stagedConfigService.GetExistingJobConfig(productGUID, jobGUID)
 		if err != nil {
 			return err
 		}

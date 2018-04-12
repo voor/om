@@ -7,7 +7,7 @@ import (
 	"github.com/pivotal-cf/om/api"
 )
 
-type ExportConfigService struct {
+type StagedConfigService struct {
 	FindStub        func(product string) (api.StagedProductsFindOutput, error)
 	findMutex       sync.RWMutex
 	findArgsForCall []struct {
@@ -78,7 +78,7 @@ type ExportConfigService struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *ExportConfigService) Find(product string) (api.StagedProductsFindOutput, error) {
+func (fake *StagedConfigService) Find(product string) (api.StagedProductsFindOutput, error) {
 	fake.findMutex.Lock()
 	ret, specificReturn := fake.findReturnsOnCall[len(fake.findArgsForCall)]
 	fake.findArgsForCall = append(fake.findArgsForCall, struct {
@@ -95,19 +95,19 @@ func (fake *ExportConfigService) Find(product string) (api.StagedProductsFindOut
 	return fake.findReturns.result1, fake.findReturns.result2
 }
 
-func (fake *ExportConfigService) FindCallCount() int {
+func (fake *StagedConfigService) FindCallCount() int {
 	fake.findMutex.RLock()
 	defer fake.findMutex.RUnlock()
 	return len(fake.findArgsForCall)
 }
 
-func (fake *ExportConfigService) FindArgsForCall(i int) string {
+func (fake *StagedConfigService) FindArgsForCall(i int) string {
 	fake.findMutex.RLock()
 	defer fake.findMutex.RUnlock()
 	return fake.findArgsForCall[i].product
 }
 
-func (fake *ExportConfigService) FindReturns(result1 api.StagedProductsFindOutput, result2 error) {
+func (fake *StagedConfigService) FindReturns(result1 api.StagedProductsFindOutput, result2 error) {
 	fake.FindStub = nil
 	fake.findReturns = struct {
 		result1 api.StagedProductsFindOutput
@@ -115,7 +115,7 @@ func (fake *ExportConfigService) FindReturns(result1 api.StagedProductsFindOutpu
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) FindReturnsOnCall(i int, result1 api.StagedProductsFindOutput, result2 error) {
+func (fake *StagedConfigService) FindReturnsOnCall(i int, result1 api.StagedProductsFindOutput, result2 error) {
 	fake.FindStub = nil
 	if fake.findReturnsOnCall == nil {
 		fake.findReturnsOnCall = make(map[int]struct {
@@ -129,7 +129,7 @@ func (fake *ExportConfigService) FindReturnsOnCall(i int, result1 api.StagedProd
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) Jobs(productGUID string) (map[string]string, error) {
+func (fake *StagedConfigService) Jobs(productGUID string) (map[string]string, error) {
 	fake.jobsMutex.Lock()
 	ret, specificReturn := fake.jobsReturnsOnCall[len(fake.jobsArgsForCall)]
 	fake.jobsArgsForCall = append(fake.jobsArgsForCall, struct {
@@ -146,19 +146,19 @@ func (fake *ExportConfigService) Jobs(productGUID string) (map[string]string, er
 	return fake.jobsReturns.result1, fake.jobsReturns.result2
 }
 
-func (fake *ExportConfigService) JobsCallCount() int {
+func (fake *StagedConfigService) JobsCallCount() int {
 	fake.jobsMutex.RLock()
 	defer fake.jobsMutex.RUnlock()
 	return len(fake.jobsArgsForCall)
 }
 
-func (fake *ExportConfigService) JobsArgsForCall(i int) string {
+func (fake *StagedConfigService) JobsArgsForCall(i int) string {
 	fake.jobsMutex.RLock()
 	defer fake.jobsMutex.RUnlock()
 	return fake.jobsArgsForCall[i].productGUID
 }
 
-func (fake *ExportConfigService) JobsReturns(result1 map[string]string, result2 error) {
+func (fake *StagedConfigService) JobsReturns(result1 map[string]string, result2 error) {
 	fake.JobsStub = nil
 	fake.jobsReturns = struct {
 		result1 map[string]string
@@ -166,7 +166,7 @@ func (fake *ExportConfigService) JobsReturns(result1 map[string]string, result2 
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) JobsReturnsOnCall(i int, result1 map[string]string, result2 error) {
+func (fake *StagedConfigService) JobsReturnsOnCall(i int, result1 map[string]string, result2 error) {
 	fake.JobsStub = nil
 	if fake.jobsReturnsOnCall == nil {
 		fake.jobsReturnsOnCall = make(map[int]struct {
@@ -180,7 +180,7 @@ func (fake *ExportConfigService) JobsReturnsOnCall(i int, result1 map[string]str
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) GetExistingJobConfig(productGUID string, jobGUID string) (api.JobProperties, error) {
+func (fake *StagedConfigService) GetExistingJobConfig(productGUID string, jobGUID string) (api.JobProperties, error) {
 	fake.getExistingJobConfigMutex.Lock()
 	ret, specificReturn := fake.getExistingJobConfigReturnsOnCall[len(fake.getExistingJobConfigArgsForCall)]
 	fake.getExistingJobConfigArgsForCall = append(fake.getExistingJobConfigArgsForCall, struct {
@@ -198,19 +198,19 @@ func (fake *ExportConfigService) GetExistingJobConfig(productGUID string, jobGUI
 	return fake.getExistingJobConfigReturns.result1, fake.getExistingJobConfigReturns.result2
 }
 
-func (fake *ExportConfigService) GetExistingJobConfigCallCount() int {
+func (fake *StagedConfigService) GetExistingJobConfigCallCount() int {
 	fake.getExistingJobConfigMutex.RLock()
 	defer fake.getExistingJobConfigMutex.RUnlock()
 	return len(fake.getExistingJobConfigArgsForCall)
 }
 
-func (fake *ExportConfigService) GetExistingJobConfigArgsForCall(i int) (string, string) {
+func (fake *StagedConfigService) GetExistingJobConfigArgsForCall(i int) (string, string) {
 	fake.getExistingJobConfigMutex.RLock()
 	defer fake.getExistingJobConfigMutex.RUnlock()
 	return fake.getExistingJobConfigArgsForCall[i].productGUID, fake.getExistingJobConfigArgsForCall[i].jobGUID
 }
 
-func (fake *ExportConfigService) GetExistingJobConfigReturns(result1 api.JobProperties, result2 error) {
+func (fake *StagedConfigService) GetExistingJobConfigReturns(result1 api.JobProperties, result2 error) {
 	fake.GetExistingJobConfigStub = nil
 	fake.getExistingJobConfigReturns = struct {
 		result1 api.JobProperties
@@ -218,7 +218,7 @@ func (fake *ExportConfigService) GetExistingJobConfigReturns(result1 api.JobProp
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) GetExistingJobConfigReturnsOnCall(i int, result1 api.JobProperties, result2 error) {
+func (fake *StagedConfigService) GetExistingJobConfigReturnsOnCall(i int, result1 api.JobProperties, result2 error) {
 	fake.GetExistingJobConfigStub = nil
 	if fake.getExistingJobConfigReturnsOnCall == nil {
 		fake.getExistingJobConfigReturnsOnCall = make(map[int]struct {
@@ -232,7 +232,7 @@ func (fake *ExportConfigService) GetExistingJobConfigReturnsOnCall(i int, result
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) Properties(product string) (map[string]api.ResponseProperty, error) {
+func (fake *StagedConfigService) Properties(product string) (map[string]api.ResponseProperty, error) {
 	fake.propertiesMutex.Lock()
 	ret, specificReturn := fake.propertiesReturnsOnCall[len(fake.propertiesArgsForCall)]
 	fake.propertiesArgsForCall = append(fake.propertiesArgsForCall, struct {
@@ -249,19 +249,19 @@ func (fake *ExportConfigService) Properties(product string) (map[string]api.Resp
 	return fake.propertiesReturns.result1, fake.propertiesReturns.result2
 }
 
-func (fake *ExportConfigService) PropertiesCallCount() int {
+func (fake *StagedConfigService) PropertiesCallCount() int {
 	fake.propertiesMutex.RLock()
 	defer fake.propertiesMutex.RUnlock()
 	return len(fake.propertiesArgsForCall)
 }
 
-func (fake *ExportConfigService) PropertiesArgsForCall(i int) string {
+func (fake *StagedConfigService) PropertiesArgsForCall(i int) string {
 	fake.propertiesMutex.RLock()
 	defer fake.propertiesMutex.RUnlock()
 	return fake.propertiesArgsForCall[i].product
 }
 
-func (fake *ExportConfigService) PropertiesReturns(result1 map[string]api.ResponseProperty, result2 error) {
+func (fake *StagedConfigService) PropertiesReturns(result1 map[string]api.ResponseProperty, result2 error) {
 	fake.PropertiesStub = nil
 	fake.propertiesReturns = struct {
 		result1 map[string]api.ResponseProperty
@@ -269,7 +269,7 @@ func (fake *ExportConfigService) PropertiesReturns(result1 map[string]api.Respon
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) PropertiesReturnsOnCall(i int, result1 map[string]api.ResponseProperty, result2 error) {
+func (fake *StagedConfigService) PropertiesReturnsOnCall(i int, result1 map[string]api.ResponseProperty, result2 error) {
 	fake.PropertiesStub = nil
 	if fake.propertiesReturnsOnCall == nil {
 		fake.propertiesReturnsOnCall = make(map[int]struct {
@@ -283,7 +283,7 @@ func (fake *ExportConfigService) PropertiesReturnsOnCall(i int, result1 map[stri
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) NetworksAndAZs(product string) (map[string]interface{}, error) {
+func (fake *StagedConfigService) NetworksAndAZs(product string) (map[string]interface{}, error) {
 	fake.networksAndAZsMutex.Lock()
 	ret, specificReturn := fake.networksAndAZsReturnsOnCall[len(fake.networksAndAZsArgsForCall)]
 	fake.networksAndAZsArgsForCall = append(fake.networksAndAZsArgsForCall, struct {
@@ -300,19 +300,19 @@ func (fake *ExportConfigService) NetworksAndAZs(product string) (map[string]inte
 	return fake.networksAndAZsReturns.result1, fake.networksAndAZsReturns.result2
 }
 
-func (fake *ExportConfigService) NetworksAndAZsCallCount() int {
+func (fake *StagedConfigService) NetworksAndAZsCallCount() int {
 	fake.networksAndAZsMutex.RLock()
 	defer fake.networksAndAZsMutex.RUnlock()
 	return len(fake.networksAndAZsArgsForCall)
 }
 
-func (fake *ExportConfigService) NetworksAndAZsArgsForCall(i int) string {
+func (fake *StagedConfigService) NetworksAndAZsArgsForCall(i int) string {
 	fake.networksAndAZsMutex.RLock()
 	defer fake.networksAndAZsMutex.RUnlock()
 	return fake.networksAndAZsArgsForCall[i].product
 }
 
-func (fake *ExportConfigService) NetworksAndAZsReturns(result1 map[string]interface{}, result2 error) {
+func (fake *StagedConfigService) NetworksAndAZsReturns(result1 map[string]interface{}, result2 error) {
 	fake.NetworksAndAZsStub = nil
 	fake.networksAndAZsReturns = struct {
 		result1 map[string]interface{}
@@ -320,7 +320,7 @@ func (fake *ExportConfigService) NetworksAndAZsReturns(result1 map[string]interf
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) NetworksAndAZsReturnsOnCall(i int, result1 map[string]interface{}, result2 error) {
+func (fake *StagedConfigService) NetworksAndAZsReturnsOnCall(i int, result1 map[string]interface{}, result2 error) {
 	fake.NetworksAndAZsStub = nil
 	if fake.networksAndAZsReturnsOnCall == nil {
 		fake.networksAndAZsReturnsOnCall = make(map[int]struct {
@@ -334,7 +334,7 @@ func (fake *ExportConfigService) NetworksAndAZsReturnsOnCall(i int, result1 map[
 	}{result1, result2}
 }
 
-func (fake *ExportConfigService) Invocations() map[string][][]interface{} {
+func (fake *StagedConfigService) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.findMutex.RLock()
@@ -354,7 +354,7 @@ func (fake *ExportConfigService) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *ExportConfigService) recordInvocation(key string, args []interface{}) {
+func (fake *StagedConfigService) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
