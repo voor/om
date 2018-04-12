@@ -49,6 +49,15 @@ var _ = Describe("export-config command", func() {
               "credential": false,
               "value": "some-non-configurable-value",
               "optional": false
+            },
+            ".properties.some-secret-property": {
+              "type": "string",
+              "configurable": true,
+              "credential": true,
+              "value": {
+                "some-secret-type": "***"
+              },
+              "optional": true
             }
           }
         }`))
@@ -119,6 +128,9 @@ var _ = Describe("export-config command", func() {
 product-properties:
   .properties.some-configurable-property:
     value: some-configurable-value
+  .properties.some-secret-property:
+    value:
+      some-secret-type: "***"
 network-properties:
   singleton_availability_zone:
     name: az-one

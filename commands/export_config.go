@@ -47,13 +47,13 @@ func (ec ExportConfig) Execute(args []string) error {
 
 	findOutput, err := ec.exportConfigService.Find(ec.Options.Product)
 	if err != nil {
-		return fmt.Errorf("could not find staged product with name 'p-bosh': %s", err)
+		return err
 	}
 	productGUID := findOutput.Product.GUID
 
 	properties, err := ec.exportConfigService.Properties(productGUID)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	configurableProperties := map[string]interface{}{}
@@ -66,12 +66,12 @@ func (ec ExportConfig) Execute(args []string) error {
 
 	networks, err := ec.exportConfigService.NetworksAndAZs(productGUID)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	jobs, err := ec.exportConfigService.Jobs(productGUID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch jobs: %s", err)
+		return err
 	}
 
 	resourceConfig := map[string]api.JobProperties{}
@@ -79,7 +79,7 @@ func (ec ExportConfig) Execute(args []string) error {
 	for name, jobGUID := range jobs {
 		jobProperties, err := ec.exportConfigService.GetExistingJobConfig(productGUID, jobGUID)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		resourceConfig[name] = jobProperties

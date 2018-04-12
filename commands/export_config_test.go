@@ -1,6 +1,8 @@
 package commands_test
 
 import (
+	"errors"
+
 	"github.com/pivotal-cf/jhanda"
 	"github.com/pivotal-cf/om/api"
 	"github.com/pivotal-cf/om/commands"
@@ -18,46 +20,53 @@ var _ = Describe("ExportTemplate", func() {
 
 	BeforeEach(func() {
 		logger = &fakes.Logger{}
+
 		exportConfigService = &fakes.ExportConfigService{}
+		exportConfigService.PropertiesReturns(
+			map[string]api.ResponseProperty{
+				".properties.some-string-property": api.ResponseProperty{
+					Value:        "some-value",
+					Configurable: true,
+				},
+				".properties.some-non-configurable-property": api.ResponseProperty{
+					Value:        "some-value",
+					Configurable: false,
+				},
+				".properties.some-secret-property": api.ResponseProperty{
+					Value: map[string]interface{}{
+						"some-secret-type": "***",
+					},
+					IsCredential: true,
+					Configurable: true,
+				},
+			}, nil)
+		exportConfigService.NetworksAndAZsReturns(
+			map[string]interface{}{
+				"singleton_availability_zone": map[string]string{
+					"name": "az-one",
+				},
+			}, nil)
+
+		exportConfigService.FindReturns(api.StagedProductsFindOutput{
+			Product: api.StagedProduct{
+				GUID: "some-product-guid",
+			},
+		}, nil)
+
+		exportConfigService.JobsReturns(map[string]string{
+			"some-job": "some-job-guid",
+		}, nil)
+		exportConfigService.GetExistingJobConfigReturns(api.JobProperties{
+			InstanceType: api.InstanceType{
+				ID: "automatic",
+			},
+			Instances: 1,
+		}, nil)
 	})
 
 	Describe("Execute", func() {
 		It("writes a config file to output", func() {
 			command := commands.NewExportConfig(exportConfigService, logger)
-			exportConfigService.PropertiesReturns(
-				map[string]api.ResponseProperty{
-					".properties.some-string-property": api.ResponseProperty{
-						Value:        "some-value",
-						Configurable: true,
-					},
-					".properties.some-non-configurable-property": api.ResponseProperty{
-						Value:        "some-value",
-						Configurable: false,
-					},
-				}, nil)
-			exportConfigService.NetworksAndAZsReturns(
-				map[string]interface{}{
-					"singleton_availability_zone": map[string]string{
-						"name": "az-one",
-					},
-				}, nil)
-
-			exportConfigService.FindReturns(api.StagedProductsFindOutput{
-				Product: api.StagedProduct{
-					GUID: "some-product-guid",
-				},
-			}, nil)
-
-			exportConfigService.JobsReturns(map[string]string{
-				"some-job": "some-job-guid",
-			}, nil)
-			exportConfigService.GetExistingJobConfigReturns(api.JobProperties{
-				InstanceType: api.InstanceType{
-					ID: "automatic",
-				},
-				Instances: 1,
-			}, nil)
-
 			err := command.Execute([]string{
 				"--product-name", "some-product",
 			})
@@ -86,6 +95,9 @@ var _ = Describe("ExportTemplate", func() {
 product-properties:
   .properties.some-string-property:
     value: some-value
+  .properties.some-secret-property:
+    value:
+      some-secret-type: "***"
 network-properties:
   singleton_availability_zone:
     name: az-one
@@ -96,35 +108,94 @@ resource-config:
       id: automatic
 `)))
 		})
-
 	})
 
 	Context("failure cases", func() {
-		// Context("when an unknown flag is provided", func() {
-		// 	It("returns an error", func() {
-		// 		command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
-		// 		err := command.Execute([]string{"--badflag"})
-		// 		Expect(err).To(MatchError("could not parse export-config flags: flag provided but not defined: -badflag"))
-		// 	})
-		// })
+		Context("when an unknown flag is provided", func() {
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{"--badflag"})
+				Expect(err).To(MatchError("could not parse export-config flags: flag provided but not defined: -badflag"))
+			})
+		})
 
-		// Context("when product name is not provided", func() {
-		// 	It("returns an error and prints out usage", func() {
-		// 		command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
-		// 		err := command.Execute([]string{})
-		// 		Expect(err).To(MatchError("could not parse export-config flags: missing required flag \"--product-name\""))
-		// 	})
-		// })
+		Context("when product name is not provided", func() {
+			It("returns an error and prints out usage", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{})
+				Expect(err).To(MatchError("could not parse export-config flags: missing required flag \"--product-name\""))
+			})
+		})
 
-		// Context("when the config cannot be exported", func() {
-		// 	It("returns an error", func() {
-		// 		command := commands.NewExportConfig(exportConfigService, exportJobsService, stagedProductsService, logger)
-		// 		exportConfigService.ExportConfigReturns(api.ExportConfigOutput{}, errors.New("some error"))
+		Context("when looking up the product GUID fails", func() {
+			BeforeEach(func() {
+				exportConfigService.FindReturns(api.StagedProductsFindOutput{}, errors.New("some-error"))
+			})
 
-		// 		err := command.Execute([]string{"--product-name", "some-product"})
-		// 		Expect(err).To(MatchError("failed to export config: some error"))
-		// 	})
-		// })
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{
+					"--product-name", "some-product",
+				})
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		Context("when looking up the product properties fails", func() {
+			BeforeEach(func() {
+				exportConfigService.PropertiesReturns(nil, errors.New("some-error"))
+			})
+
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{
+					"--product-name", "some-product",
+				})
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		Context("when looking up the network fails", func() {
+			BeforeEach(func() {
+				exportConfigService.NetworksAndAZsReturns(nil, errors.New("some-error"))
+			})
+
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{
+					"--product-name", "some-product",
+				})
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		Context("when listing jobs fails", func() {
+			BeforeEach(func() {
+				exportConfigService.JobsReturns(nil, errors.New("some-error"))
+			})
+
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{
+					"--product-name", "some-product",
+				})
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		Context("when looking up the job fails", func() {
+			BeforeEach(func() {
+				exportConfigService.GetExistingJobConfigReturns(api.JobProperties{}, errors.New("some-error"))
+			})
+
+			It("returns an error", func() {
+				command := commands.NewExportConfig(exportConfigService, logger)
+				err := command.Execute([]string{
+					"--product-name", "some-product",
+				})
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
 	})
 
 	Describe("Usage", func() {

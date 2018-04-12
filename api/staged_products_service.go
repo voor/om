@@ -43,6 +43,7 @@ type ProductsConfigurationInput struct {
 type ResponseProperty struct {
 	Value        interface{} `json:"value"`
 	Configurable bool        `json:"configurable"`
+	IsCredential bool        `json:"credential"`
 }
 
 type StagedProductsService struct {

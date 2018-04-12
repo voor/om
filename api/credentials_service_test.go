@@ -100,7 +100,7 @@ var _ = Describe("CredentialsService", func() {
 				return &http.Response{
 					StatusCode: http.StatusOK,
 					Body: ioutil.NopCloser(
-						strings.NewReader(`{"credential":{"type":"rsa_cert_credentials", "value":{"private_key_pem":"some-private-key", "cert_pem":"some-cert-pem"}}}`),
+						strings.NewReader(`{"credential":{"type":"rsa_cert_credentials", "credential": true, "value":{"private_key_pem":"some-private-key", "cert_pem":"some-cert-pem"}}}`),
 					),
 				}, nil
 			}

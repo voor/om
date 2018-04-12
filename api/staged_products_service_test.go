@@ -794,6 +794,13 @@ key-4: 2147483648
 								".properties.some-non-configurable-property": {
 									"value": "some-value",
 									"configurable": false
+								},
+								".properties.some-secret-property": {
+									"value": {
+										"some-secret-type": "***"
+									},
+									"configurable": true,
+									"credential": true
 								}
 							}
 						}`)),
@@ -802,6 +809,7 @@ key-4: 2147483648
 				return resp, nil
 			}
 		})
+
 		It("returns the configuration for a product", func() {
 			config, err := service.Properties("some-product-guid")
 			Expect(err).NotTo(HaveOccurred())
@@ -813,6 +821,13 @@ key-4: 2147483648
 				".properties.some-non-configurable-property": api.ResponseProperty{
 					Value:        "some-value",
 					Configurable: false,
+				},
+				".properties.some-secret-property": api.ResponseProperty{
+					Value: map[string]interface{}{
+						"some-secret-type": "***",
+					},
+					Configurable: true,
+					IsCredential: true,
 				},
 			}))
 		})
