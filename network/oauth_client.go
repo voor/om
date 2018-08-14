@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
+	"strings"
 )
 
 type OAuthClient struct {
@@ -82,7 +83,12 @@ func (oc OAuthClient) Do(request *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("target flag is required. Run `om help` for more info.")
 	}
 
-	targetURL, err := url.Parse(oc.target)
+	candidateURL := oc.target
+	if !strings.Contains(candidateURL, "//") {
+		candidateURL = fmt.Sprintf("//%s", candidateURL)
+	}
+
+	targetURL, err := url.Parse(candidateURL)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse target url: %s", err)
 	}

@@ -132,7 +132,7 @@ var _ = Describe("OAuthClient", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				noScheme.Scheme = ""
-				finalURL := noScheme.String()
+				finalURL := strings.Replace(noScheme.String(), "//", "", 1)
 
 				client, err := network.NewOAuthClient(finalURL, "opsman-username", "opsman-password", "", "", true, false, time.Duration(30)*time.Second, time.Duration(5)*time.Second)
 				Expect(err).NotTo(HaveOccurred())
