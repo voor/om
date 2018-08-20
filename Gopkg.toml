@@ -8,7 +8,3 @@
 [[constraint]]
   name = "github.com/pivotal-cf/kiln"
   branch = "master"
-
-[[constraint]]
-  name = "github.com/fredwangwang/formcontent"
-  branch = "threaded"
