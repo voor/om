@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu
 
 ADD om /bin/
 
