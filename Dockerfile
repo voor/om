@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM gcr.io/distroless/base
 
 ADD om /bin/
 
